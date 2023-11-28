@@ -9,52 +9,6 @@ from pathlib import Path
 # Referencing https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
 # for details on the calibration process.
 
-
-
-# def get_chessboard_image_points(image: np.ndarray,
-#                                 pattern_size: Tuple(),
-
-
-#                       )
-# retval, corners = cv.findChessboardCorners(image=None,
-#                                            patternSize=(),
-#                                            corners=None,
-#                                            flags=None)
-
-# 2. Solve for camera intrinsic matrix (K).
-# Using the 3D-->2D point correspondences obtained across all the images in the
-# previous step.
-
-
-# def world_points_from_chessboard_corners(chessboard_corners: np.ndarray) -> list:
-
-#     # Essentially, we already know exactly what this array is going to look
-#     # like, whether we know the square size or not. Why? Because in every image,
-#     # we're expecting to find corner points for the exact same pattern--a
-#     # pattern that we already know.
-
-#     # Therefore, if the pattern is 6x8 (for example), then we know that we're
-#     # ALWAYS going to get 48 corner points if the pattern was found.
-
-#     # AND, we know the first row of those corner points is separated by 1
-#     # square, we know each row is separated by one square, and we know the top
-#     # leftmost point is the world origin (0,0,0). Therefore, because we know
-#     # what the 3D points are going to be right off the bat, we can just add the
-#     # same array of 3D points for every image, as long as the pattern is found!
-
-#     # The reason these same 3D points are still useful (even though they're the
-#     # same across all our images) is because they map back to different image
-#     # points! (therefore giving us linearly independent equations from different
-#     # point correspondences). 
-
-
-#     # Okay, they generate this using a meshgrid--I guess I could see how that
-#     # works.
-    
-
-#     pass
-
-
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
@@ -70,7 +24,7 @@ if __name__ == "__main__":
     # Also copied from tutorial: Corner point refining steps.
     corner_point_refining_window_size = 11
     corner_point_refining_criteria =  (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    debug_display_corners = True
+    debug_display_corners = False
 
     # Create lists for resulting 3D points and 2D points.
     world_points = []
@@ -133,18 +87,17 @@ if __name__ == "__main__":
                 cv.imshow(image_path.parts[-1], image)
                 cv.waitKey(500)
 
-    # 1. Find corner points in each image.
-    # First, need to find the corners of the chessboard in each of the provided
-    # images. Can use the opencv find chessboard corners function.
-    # image_corners = 
 
-
-    # The opencv function we use assumes the top left-most corner is the
-    # world coordinate origin, and assumes that the chessboard lies flat on the XY
-    # plane of the world frame such that all points on the chessboard have Zw == 0.
-    # Based on that assumption, once we detect all the points on our chessboard from
-    # left to right, top to bottom--for each of those points, we can compute its
-    # position relative to the origin (top-left) point.
+    # Once we have enough (10) 3D-->2D point correspondences from corners in our
+    # chessboard calibration images, we can call the calibrateCamera function to
+    # obtain the camera matrix == the camera's intrinsic parameters.
+    # TODO Why is calibrateCamera expecting the dimensions in reverse order?
+    retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv.calibrateCamera(objectPoints=world_points,
+                                                                        imagePoints=image_points,
+                                                                        imageSize=image_gray.shape[::-1],
+                                                                        cameraMatrix=None,
+                                                                        distCoeffs=None)
     
+
     
     cv.destroyAllWindows()
