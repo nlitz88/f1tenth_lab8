@@ -255,8 +255,8 @@ def get_camera_height(depth_calibration_image: Path,
 
     # Get the camera matrix and distortion coefficients before you can undistort
     # the image.
-    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=8,
-                                                               chessboard_vertical_inner_corners=6)
+    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=6,
+                                                               chessboard_vertical_inner_corners=8)
     
     # Undistort the loaded image.
     new_image = undistort_image(image=image,
