@@ -28,6 +28,7 @@ def get_camera_matrix(chessboard_inside_row_width: int,
     # If the camera matrix hasn't already been computed/generated, then we'll
     # compute it below.
     if not camera_matrix_file.exists():
+        print(f"No existing camera matrix file found in provided output directory {output_dir}. Starting camera calibration and computing camera intrinsics now.")
         camera_matrix, distortion_coefficients = compute_camera_matrix(calibration_image_dir=calibration_image_dir,
                                                                     chessboard_inside_row_width=chessboard_inside_row_width,
                                                                     chessboard_inside_column_height=chessboard_inside_column_height)
@@ -36,6 +37,7 @@ def get_camera_matrix(chessboard_inside_row_width: int,
         with camera_matrix_file.open(mode='wb') as pickle_file:
             camera_parameters = [camera_matrix, distortion_coefficients]
             pickle.dump(camera_parameters, pickle_file, pickle.HIGHEST_PROTOCOL)
+            print(f"Finished writing newly generated camera parameters to file {camera_matrix_file}")
         
         # Return the newly computed values.
         return camera_matrix, distortion_coefficients
@@ -43,8 +45,10 @@ def get_camera_matrix(chessboard_inside_row_width: int,
     # Otherwise, if there is an existing file, read the camera parameters from
     # that and return those.
     else:
-        with camera_matrix_file.open(mode='wb') as pickle_file:
+        print(f"Existing camera parameters file {camera_matrix_file} found. Loading parameters now.")
+        with camera_matrix_file.open(mode='rb') as pickle_file:
             camera_parameters = pickle.load(pickle_file)
+            print(f"Successfully loaded camera parameters from {camera_matrix_file}.")
         # Return the parameters loaded from file.
         return camera_parameters[0], camera_parameters[1]
 
@@ -173,5 +177,6 @@ def compute_camera_matrix(calibration_image_dir: Path,
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
-    _, _ = compute_camera_matrix()
+    camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
+                                                 chessboard_inside_column_height=8)
     
