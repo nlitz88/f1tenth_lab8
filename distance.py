@@ -281,6 +281,8 @@ def get_camera_height(depth_calibration_image: Path,
     # into the pixel plane. For the reverse, have to multiply by the inverse of
     # K (or just do the operations on each element in reverse, I guess). Should
     # verify this.
+    # TODO: Try to multiply the points by the inverse of K and see if you get
+    # the same result!
     # TODO: Make sure these points are being parsed in the correct order.
     point_x_px, point_y_px = point_coords
     
@@ -327,6 +329,65 @@ def get_point_coords_in_image(image: np.ndarray) -> Tuple[int, int]:
 
     return 0,0
 
+# What I'm debating right now is if I should perform all these transformations
+# as matrix operations. 
+
+# I think for the sake of my constrained timeline for this, I'll try to brute
+# force implement this first--at least just packing everything in a single
+# function. Not as robust/testable, but a quick prototype. If I have time, I'll
+# try to construct the transformation matrix and see if I can do things that way
+# too.
+
+# def camera_ground_point_from_pixel_point(camera_height_m: float,
+#                                          pixel_coords_m: Tuple[int, int]):
+#     # Ycam = camera_height in car frame.
+#     pass
+
+# def car_ground_point_from_camera_point():
+#     # Zcar = 0.
+#     pass
+
+def car_ground_point_from_pixel_point(camera_height_m: float,
+                                      pixel_coords_m: Tuple[int, int]) -> Tuple[float, float]:
+    """Computes the 3D car coordinates with Zcar == 0 for the provided point in
+    the image. Will only work for 2D points that correspond to points at the
+    same Z level as the base_link of the car (must be at the same height in the
+    world as the car frame origin). I.e., the provided points in the image must
+    be in the same ground plane as the car! This function only computes the Xcar
+    and Ycar components of the point's location, as its Z-component is assumed
+    to be zero.
+
+    Args:
+        camera_height_m (float): The offset along the Zcar axis from the
+        base_link (car frame) origin to the camera origin. I.e., how far up the
+        camera's origin is from the car frame origin. Technically, if we're
+        measuring to points on the ground, this height should *really* be
+        whatever the current height of the camera is with respect to the ground
+        (which would include the height of the base_link off the ground), but
+        we'll just approximate that the base link origin is at ground level.
+        pixel_coords_m (Tuple[int, int]): The (x,y) PIXEL COORDINATES of the
+        point you want to find the corresponding 3D points for. This MUST be a
+        point ON THE GROUND / IN THE GROUND PLANE IN THE IMAGE! Otherwise, the
+        resulting Xcar and Ycar components won't be accurate.
+
+    Returns:
+        Tuple[float, float]: The Xcar, Ycar location of the point in the car's
+        frame.
+    """
+
+
+def get_car_points_from_pixel_coords(camera_height_m: float,
+                                     pixel_coords_m: Tuple[int, int]) -> Tuple[float, float]:
+    """Computes the 3D car coordinates 
+
+    Args:
+        camera_height_m (float): _description_
+        pixel_coords_m (Tuple[int, int]): _description_
+
+    Returns:
+        Tuple[float, float]: _description_
+    """
+
 
 if __name__ == "__main__":
 
@@ -347,7 +408,3 @@ if __name__ == "__main__":
 
     # image = load_image(Path(r"resource/cone_x40cm.png"))
     # x,y = get_point_coords_in_image(image)
-
-    # THEN, for the next task, can use the code from the height task above to
-    # get the widht of the cone, which we can then use to get depth in future
-    # images. Not sure if this is exactly what it is looking for though.
