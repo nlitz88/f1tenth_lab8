@@ -67,6 +67,10 @@ if __name__ == "__main__":
     chessboard_internal_corners_row_width = 6
     chessboard_internal_corners_column_height = 8
     chessboard_size = (chessboard_internal_corners_row_width, chessboard_internal_corners_column_height)
+    # Also copied from tutorial: Corner point refining steps.
+    corner_point_refining_window_size = 11
+    corner_point_refining_criteria =  (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    debug_display_corners = True
 
     # Create lists for resulting 3D points and 2D points.
     world_points = []
@@ -76,7 +80,7 @@ if __name__ == "__main__":
     # points found in a single image. The tutorial constructs it rather
     # compactly, so using their code here:
     chessboard_world_points = np.zeros((chessboard_internal_corners_row_width*chessboard_internal_corners_column_height, 3), np.float32)
-    chessboard_world_points[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+    chessboard_world_points[:,:2] = np.mgrid[0:chessboard_internal_corners_column_height,0:chessboard_internal_corners_row_width].T.reshape(-1,2)
 
     # For each image:
     for image_path in calibration_image_paths:
@@ -106,16 +110,28 @@ if __name__ == "__main__":
 
             # Refine the 2D image points using cornerSubPix according to
             # tutorial.
-            
+            # Create a grayscale version of the image to use with cornerSubPix
+            # function.
+            image_gray = cv.cvtColor(src=image, code=cv.COLOR_BGR2GRAY)
+            refined_image_corner_points = cv.cornerSubPix(image=image_gray, 
+                                                          corners=corners,
+                                                          winSize=(corner_point_refining_window_size,corner_point_refining_window_size),
+                                                          zeroZone=(-1,-1),
+                                                          criteria=corner_point_refining_criteria)
 
             # Add the newly refined 2D corner point to the list of image points.
-            
-        # 3. 
+            image_points.append(refined_image_corner_points)
 
-        # 4. Store each corner's newly determined 3D world point.
-
-        # 5. Store the corner's corresponding 2D image point.
-
+            # Display corners if enabled.
+            if debug_display_corners == True:
+                # Draw the refined corners on the the original color image.
+                cv.drawChessboardCorners(image=image,
+                                         patternSize=chessboard_size,
+                                         corners=refined_image_corner_points,
+                                         patternWasFound=True)# 
+                # Display the updated (drawn on) image.
+                cv.imshow(image_path.parts[-1], image)
+                cv.waitKey(500)
 
     # 1. Find corner points in each image.
     # First, need to find the corners of the chessboard in each of the provided
