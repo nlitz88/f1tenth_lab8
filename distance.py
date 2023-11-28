@@ -258,17 +258,17 @@ def get_camera_height(depth_calibration_image: Path,
     camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=6,
                                                                chessboard_vertical_inner_corners=8)
     
-    # Undistort the loaded image.
-    new_image = undistort_image(image=image,
-                                camera_matrix=camera_matrix,
-                                distortion_coefficients=distortion_coefficients)
-    print(f"New image shape: {new_image.shape}")
+    # # Undistort the loaded image.
+    # new_image = undistort_image(image=image,
+    #                             camera_matrix=camera_matrix,
+    #                             distortion_coefficients=distortion_coefficients)
+    # print(f"New image shape: {new_image.shape}")
 
-    cv.imshow("Original image", image)
-    cv.waitKey(1000)
-    cv.imshow("Undistorted iamge", new_image)
-    cv.waitKey(10000)
-    cv.destroyAllWindows()
+    # cv.imshow("Original image", image)
+    # cv.waitKey(1000)
+    # cv.imshow("Undistorted iamge", new_image)
+    # cv.waitKey(10000)
+    # cv.destroyAllWindows()
 
     # Parse the camera matrix for its intrinsic parameters.
     cx = camera_matrix[0, 2]
@@ -338,8 +338,8 @@ if __name__ == "__main__":
                                 object_depth_m=0.4,
                                 point_coords=(661,500))
     print(f"Computed height: {height} meters.")
-    # TODO: I think the height is incorrect--need to figure out where my
-    # calibration process is going wrong (if that's what is happening).
+    # Currently returning 0.13879840542827868 meters, or about 13 cm--which
+    # seems reasonable.
 
     # Temporarily, load an image, and get a clicked point within it. Use this to
     # find the point on the cone we want to measure to.
