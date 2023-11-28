@@ -112,7 +112,7 @@ def compute_camera_matrix(calibration_image_dir: Path,
                 cv.drawChessboardCorners(image=image,
                                          patternSize=chessboard_size,
                                          corners=refined_image_corner_points,
-                                         patternWasFound=True)# 
+                                         patternWasFound=True)
                 # Display the updated (drawn on) image.
                 cv.imshow(image_path.parts[-1], image)
                 cv.waitKey(500)
@@ -125,10 +125,10 @@ def compute_camera_matrix(calibration_image_dir: Path,
     # TODO Why is calibrateCamera expecting the dimensions in reverse order?
     # NOTE Don't need the R, T that this function returns.
     retval, cameraMatrix, distCoeffs, _, _ = cv.calibrateCamera(objectPoints=world_points,
-                                                                        imagePoints=image_points,
-                                                                        imageSize=image_gray.shape[::-1],
-                                                                        cameraMatrix=None,
-                                                                        distCoeffs=None)
+                                                                imagePoints=image_points,
+                                                                imageSize=image_gray.shape[::-1],
+                                                                cameraMatrix=None,
+                                                                distCoeffs=None)
     
     if retval == False:
         raise Exception(f"Failed to compute camera matrix!")
@@ -259,16 +259,16 @@ def get_camera_height(depth_calibration_image: Path,
                                                                chessboard_vertical_inner_corners=6)
     
     # Undistort the loaded image.
-    # new_image = undistort_image(image=image,
-    #                             camera_matrix=camera_matrix,
-    #                             distortion_coefficients=distortion_coefficients)
-    # print(f"New image shape: {new_image.shape}")
+    new_image = undistort_image(image=image,
+                                camera_matrix=camera_matrix,
+                                distortion_coefficients=distortion_coefficients)
+    print(f"New image shape: {new_image.shape}")
 
-    # cv.imshow("Original image", image)
-    # cv.waitKey(1000)
-    # cv.imshow("Undistorted iamge", new_image)
-    # cv.waitKey(10000)
-    # cv.destroyAllWindows()
+    cv.imshow("Original image", image)
+    cv.waitKey(1000)
+    cv.imshow("Undistorted iamge", new_image)
+    cv.waitKey(10000)
+    cv.destroyAllWindows()
 
     # Parse the camera matrix for its intrinsic parameters.
     cx = camera_matrix[0, 2]
