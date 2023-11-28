@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 # for details on the calibration process.
 
 def compute_camera_matrix(calibration_image_dir: Path,
-                          chessboard_inside_row_width: int,
-                          chessboard_inside_column_height: int,
+                          chessboard_horizontal_inner_corners: int,
+                          chessboard_vertical_inner_corners: int,
                           corner_point_refining_window_size: Optional[int] = 11) -> Tuple[np.ndarray, np.ndarray]:
     """Computes a camera's camera matrix (K) and its distortion coefficients
     provided a directory of chessboard calibration images.
@@ -22,11 +22,10 @@ def compute_camera_matrix(calibration_image_dir: Path,
     Args:
         calibration_image_dir (Path): Directory containing at least 10
         chessboard calibration images.
-        chessboard_inside_row_width (int): The number of inner corners within a
-        chessboard. I.e., where the black squares meet inside the chessboard
-        along a row.
-        chessboard_inside_column_height (int): The number of inner corners
-        within a chessboard along a column.
+        chessboard_horizontal_inner_corners (int): The number of horizontal inner
+        corners.
+        chessboard_vertical_inner_corners (int): The number of vertical inner
+        corners.
         corner_point_refining_window_size (Optional[int], optional): Window size
         for point corner point refinement. Defaults to 11.
 
@@ -43,12 +42,18 @@ def compute_camera_matrix(calibration_image_dir: Path,
     calibration_image_dir = Path(r"./calibration")
     calibration_image_paths = [path for path in calibration_image_dir.iterdir() if path.is_file()]
     
+    # All images are 960x540 == widthxheight == 960 columns, 540 rows.
+
     # Define other calibration parameters.
-    chessboard_size = (chessboard_inside_row_width, chessboard_inside_column_height)
+    # Chessboard size: If the chessboard is oriented so that x is to the right
+    # of the image and y is down, then the dimensions of the chessboard is said
+    # to be the number of vertical inner corners x number horizontal inner
+    # corners.
+    chessboard_size = (chessboard_vertical_inner_corners, chessboard_horizontal_inner_corners)
     # Also copied from tutorial: Corner point refining steps.
     corner_point_refining_window_size = 11
     corner_point_refining_criteria =  (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    debug_display_corners = False
+    debug_display_corners = True
 
     # Create lists for resulting 3D points and 2D points.
     world_points = []
@@ -57,14 +62,15 @@ def compute_camera_matrix(calibration_image_dir: Path,
     # Precompute the 3D point array corresponding to each of the hxw corner
     # points found in a single image. The tutorial constructs it rather
     # compactly, so using their code here:
-    chessboard_world_points = np.zeros((chessboard_inside_row_width*chessboard_inside_column_height, 3), np.float32)
-    chessboard_world_points[:,:2] = np.mgrid[0:chessboard_inside_column_height,0:chessboard_inside_row_width].T.reshape(-1,2)
+    chessboard_world_points = np.zeros((chessboard_vertical_inner_corners*chessboard_horizontal_inner_corners, 3), np.float32)
+    chessboard_world_points[:,:2] = np.mgrid[0:chessboard_vertical_inner_corners,0:chessboard_horizontal_inner_corners].T.reshape(-1,2)
 
     # For each image:
     for image_path in calibration_image_paths:
         
         # 1. Load the current image into memory.
         image = cv.imread(str(image_path))
+        # NOTE: Each image is 960x540 == width, height == columns, rows.
         # cv.imshow(image_path.parts[-1], image)
         # cv.waitKey(1000)
 
@@ -132,8 +138,8 @@ def compute_camera_matrix(calibration_image_dir: Path,
 
     return cameraMatrix, distCoeffs
 
-def get_camera_matrix(chessboard_inside_row_width: int,
-                      chessboard_inside_column_height: int,
+def get_camera_matrix(chessboard_horizontal_inner_corners: int,
+                      chessboard_vertical_inner_corners: int,
                       output_dir: Optional[Path] = Path.cwd(),
                       calibration_image_dir: Optional[Path] = Path.cwd()/"calibration") -> Tuple[np.ndarray, np.ndarray]:
     """Computes camera intrinsics provided calibration chessboard
@@ -142,10 +148,10 @@ def get_camera_matrix(chessboard_inside_row_width: int,
     recompute the intrinsics and write them to disk.
 
     Args:
-        chessboard_inside_row_width (int):The number of inner corners within a
+        chessboard_horizontal_inner_corners (int):The number of inner corners within a
         chessboard. I.e., where the black squares meet inside the chessboard
         along a row.
-        chessboard_inside_column_height (int): The number of inner corners
+        chessboard_vertical_inner_corners (int): The number of inner corners
         within a chessboard along a column.
         output_dir (Optional[Path], optional): Directory that intrinsics file
         will be written to. Defaults to directory you invoke this function from
@@ -178,8 +184,8 @@ def get_camera_matrix(chessboard_inside_row_width: int,
     if not camera_matrix_file.exists():
         print(f"No existing camera matrix file found in provided output directory {output_dir}. Starting camera calibration and computing camera intrinsics now.")
         camera_matrix, distortion_coefficients = compute_camera_matrix(calibration_image_dir=calibration_image_dir,
-                                                                    chessboard_inside_row_width=chessboard_inside_row_width,
-                                                                    chessboard_inside_column_height=chessboard_inside_column_height)
+                                                                    chessboard_horizontal_inner_corners=chessboard_horizontal_inner_corners,
+                                                                    chessboard_vertical_inner_corners=chessboard_vertical_inner_corners)
         # Write the camera matrix and distortion coefficients to a new pickle
         # file.
         with camera_matrix_file.open(mode='wb') as pickle_file:
@@ -249,8 +255,8 @@ def get_camera_height(depth_calibration_image: Path,
 
     # Get the camera matrix and distortion coefficients before you can undistort
     # the image.
-    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_inside_row_width=8,
-                                                               chessboard_inside_column_height=6)
+    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=8,
+                                                               chessboard_vertical_inner_corners=6)
     
     # Undistort the loaded image.
     # new_image = undistort_image(image=image,
@@ -325,8 +331,8 @@ def get_point_coords_in_image(image: np.ndarray) -> Tuple[int, int]:
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
-    # camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
-    #                                              chessboard_inside_column_height=8)
+    # camera_matrix, dist_coef = get_camera_matrix(chessboard_horizontal_inner_corners=6,
+    #                                              chessboard_vertical_inner_corners=8)
 
     height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
                                 object_depth_m=0.4,
