@@ -1,4 +1,4 @@
-"""Script that implements the calibration process required for lab 8."""
+"""Module with functions for camera calibration and 3D measurement."""
 
 from typing import Optional, Tuple
 import cv2 as cv
@@ -9,74 +9,6 @@ import pickle
 
 # Referencing https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
 # for details on the calibration process.
-
-def get_camera_matrix(chessboard_inside_row_width: int,
-                      chessboard_inside_column_height: int,
-                      output_dir: Optional[Path] = Path.cwd(),
-                      calibration_image_dir: Optional[Path] = Path.cwd()/"calibration") -> Tuple[np.ndarray, np.ndarray]:
-    """Computes camera intrinsics provided calibration chessboard
-    characteristics and calibration images. Will attempt to load existing
-    intrinsics file from the specified output directory. If none found, will
-    recompute the intrinsics and write them to disk.
-
-    Args:
-        chessboard_inside_row_width (int):The number of inner corners within a
-        chessboard. I.e., where the black squares meet inside the chessboard
-        along a row.
-        chessboard_inside_column_height (int): The number of inner corners
-        within a chessboard along a column.
-        output_dir (Optional[Path], optional): Directory that intrinsics file
-        will be written to. Defaults to directory you invoke this function from
-        (your current working directory at runtime).
-        calibration_image_dir (Optional[Path], optional): Directory containing
-        at least 10 images of the chessboard for calibration. Defaults to
-        Path.cwd()/"calibration".
-
-    Raises:
-        Exception: If provided output directory does not exist.
-        Exception: If provided calibration image directory does not exist.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: Camera matrix (K), distortion
-        coefficients.
-    """
-    
-    # Check inputs.
-    if not output_dir.exists():
-        raise Exception(f"Provided output directory {output_dir} doesn't exist!")
-    if not calibration_image_dir.exists():
-            raise Exception(f"Provided calibration image directory {calibration_image_dir} doesn't exist!")
-
-    # Check the output_dir to see if a camera_matrix pickle file exists.
-    file_name = "camera_matrix.pickle"
-    camera_matrix_file = Path(output_dir)/file_name
-
-    # If the camera matrix hasn't already been computed/generated, then we'll
-    # compute it below.
-    if not camera_matrix_file.exists():
-        print(f"No existing camera matrix file found in provided output directory {output_dir}. Starting camera calibration and computing camera intrinsics now.")
-        camera_matrix, distortion_coefficients = compute_camera_matrix(calibration_image_dir=calibration_image_dir,
-                                                                    chessboard_inside_row_width=chessboard_inside_row_width,
-                                                                    chessboard_inside_column_height=chessboard_inside_column_height)
-        # Write the camera matrix and distortion coefficients to a new pickle
-        # file.
-        with camera_matrix_file.open(mode='wb') as pickle_file:
-            camera_parameters = [camera_matrix, distortion_coefficients]
-            pickle.dump(camera_parameters, pickle_file, pickle.HIGHEST_PROTOCOL)
-            print(f"Finished writing newly generated camera parameters to file {camera_matrix_file}")
-        
-        # Return the newly computed values.
-        return camera_matrix, distortion_coefficients
-    
-    # Otherwise, if there is an existing file, read the camera parameters from
-    # that and return those.
-    else:
-        print(f"Existing camera parameters file {camera_matrix_file} found. Loading parameters now.")
-        with camera_matrix_file.open(mode='rb') as pickle_file:
-            camera_parameters = pickle.load(pickle_file)
-            print(f"Successfully loaded camera parameters from {camera_matrix_file}.")
-        # Return the parameters loaded from file.
-        return camera_parameters[0], camera_parameters[1]
 
 def compute_camera_matrix(calibration_image_dir: Path,
                           chessboard_inside_row_width: int,
@@ -199,6 +131,93 @@ def compute_camera_matrix(calibration_image_dir: Path,
     print(f"Successfully computed camera distortion coefficients:\n{distCoeffs}")
 
     return cameraMatrix, distCoeffs
+
+def get_camera_matrix(chessboard_inside_row_width: int,
+                      chessboard_inside_column_height: int,
+                      output_dir: Optional[Path] = Path.cwd(),
+                      calibration_image_dir: Optional[Path] = Path.cwd()/"calibration") -> Tuple[np.ndarray, np.ndarray]:
+    """Computes camera intrinsics provided calibration chessboard
+    characteristics and calibration images. Will attempt to load existing
+    intrinsics file from the specified output directory. If none found, will
+    recompute the intrinsics and write them to disk.
+
+    Args:
+        chessboard_inside_row_width (int):The number of inner corners within a
+        chessboard. I.e., where the black squares meet inside the chessboard
+        along a row.
+        chessboard_inside_column_height (int): The number of inner corners
+        within a chessboard along a column.
+        output_dir (Optional[Path], optional): Directory that intrinsics file
+        will be written to. Defaults to directory you invoke this function from
+        (your current working directory at runtime).
+        calibration_image_dir (Optional[Path], optional): Directory containing
+        at least 10 images of the chessboard for calibration. Defaults to
+        Path.cwd()/"calibration".
+
+    Raises:
+        Exception: If provided output directory does not exist.
+        Exception: If provided calibration image directory does not exist.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Camera matrix (K), distortion
+        coefficients.
+    """
+    
+    # Check inputs.
+    if not output_dir.exists():
+        raise Exception(f"Provided output directory {output_dir} doesn't exist!")
+    if not calibration_image_dir.exists():
+            raise Exception(f"Provided calibration image directory {calibration_image_dir} doesn't exist!")
+
+    # Check the output_dir to see if a camera_matrix pickle file exists.
+    file_name = "camera_matrix.pickle"
+    camera_matrix_file = Path(output_dir)/file_name
+
+    # If the camera matrix hasn't already been computed/generated, then we'll
+    # compute it below.
+    if not camera_matrix_file.exists():
+        print(f"No existing camera matrix file found in provided output directory {output_dir}. Starting camera calibration and computing camera intrinsics now.")
+        camera_matrix, distortion_coefficients = compute_camera_matrix(calibration_image_dir=calibration_image_dir,
+                                                                    chessboard_inside_row_width=chessboard_inside_row_width,
+                                                                    chessboard_inside_column_height=chessboard_inside_column_height)
+        # Write the camera matrix and distortion coefficients to a new pickle
+        # file.
+        with camera_matrix_file.open(mode='wb') as pickle_file:
+            camera_parameters = [camera_matrix, distortion_coefficients]
+            pickle.dump(camera_parameters, pickle_file, pickle.HIGHEST_PROTOCOL)
+            print(f"Finished writing newly generated camera parameters to file {camera_matrix_file}")
+        
+        # Return the newly computed values.
+        return camera_matrix, distortion_coefficients
+    
+    # Otherwise, if there is an existing file, read the camera parameters from
+    # that and return those.
+    else:
+        print(f"Existing camera parameters file {camera_matrix_file} found. Loading parameters now.")
+        with camera_matrix_file.open(mode='rb') as pickle_file:
+            camera_parameters = pickle.load(pickle_file)
+            print(f"Successfully loaded camera parameters from {camera_matrix_file}.")
+        # Return the parameters loaded from file.
+        return camera_parameters[0], camera_parameters[1]
+    
+def get_camera_height() -> float:
+    # Returns the camera height with respect to the base link frame origin.
+    # I.e., the offset in the z-direction going from the base_link origin to the
+    # camera frame origin.
+
+
+    # Undistort image using distortion coefficients obtained from calibration
+    # (if necessary).
+
+    # The upshot of this function is probably to figure out the extrinsics of
+    # the camera with respect to the car origin. I.e., if we observe something
+    # in the camera frame (have a 3D camera point), we are going to want to be
+    # able to project that into 3D vehicle frame coordinates (I.e., from the
+    # perspective of the car / base_link frame). There is technically a rotation
+    # between these frames (as cameras/opencv conventionally use xyz not as
+    # RHR), but the main thing is that there is ONLY a translation component
+    # along the car's z-axis.
+    pass
 
 if __name__ == "__main__":
 
