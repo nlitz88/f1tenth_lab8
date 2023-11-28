@@ -42,9 +42,7 @@ def compute_camera_matrix(calibration_image_dir: Path,
     calibration_image_paths = [path for path in calibration_image_dir.iterdir() if path.is_file()]
     
     # Define other calibration parameters.
-    chessboard_internal_corners_row_width = 6
-    chessboard_internal_corners_column_height = 8
-    chessboard_size = (chessboard_internal_corners_row_width, chessboard_internal_corners_column_height)
+    chessboard_size = (chessboard_inside_row_width, chessboard_inside_column_height)
     # Also copied from tutorial: Corner point refining steps.
     corner_point_refining_window_size = 11
     corner_point_refining_criteria =  (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -57,8 +55,8 @@ def compute_camera_matrix(calibration_image_dir: Path,
     # Precompute the 3D point array corresponding to each of the hxw corner
     # points found in a single image. The tutorial constructs it rather
     # compactly, so using their code here:
-    chessboard_world_points = np.zeros((chessboard_internal_corners_row_width*chessboard_internal_corners_column_height, 3), np.float32)
-    chessboard_world_points[:,:2] = np.mgrid[0:chessboard_internal_corners_column_height,0:chessboard_internal_corners_row_width].T.reshape(-1,2)
+    chessboard_world_points = np.zeros((chessboard_inside_row_width*chessboard_inside_column_height, 3), np.float32)
+    chessboard_world_points[:,:2] = np.mgrid[0:chessboard_inside_column_height,0:chessboard_inside_row_width].T.reshape(-1,2)
 
     # For each image:
     for image_path in calibration_image_paths:
@@ -249,8 +247,8 @@ def get_camera_height(depth_calibration_image: Path,
 
     # Get the camera matrix and distortion coefficients before you can undistort
     # the image.
-    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_inside_row_width=6,
-                                                               chessboard_inside_column_height=8)
+    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_inside_row_width=8,
+                                                               chessboard_inside_column_height=6)
     
     # Undistort the loaded image.
     new_image = undistort_image(image=image,
