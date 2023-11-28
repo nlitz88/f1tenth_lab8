@@ -1,17 +1,79 @@
 """Script that implements the calibration process required for lab 8."""
 
-from typing import Tuple
+from typing import Optional, Tuple
 import cv2 as cv
 import numpy as np
 from pathlib import Path
+import pickle
 
 
 # Referencing https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
 # for details on the calibration process.
 
-if __name__ == "__main__":
+def get_camera_matrix(chessboard_inside_row_width: int,
+                      chessboard_inside_column_height: int,
+                      output_dir: Optional[Path] = Path.cwd(),
+                      calibration_image_dir: Optional[Path] = Path.cwd()/"calibration") -> Tuple[np.ndarray, np.ndarray]:
+    
+    # Check inputs.
+    if not output_dir.exists():
+        raise Exception(f"Provided output directory {output_dir} doesn't exist!")
+    if not calibration_image_dir.exists():
+            raise Exception(f"Provided calibration image directory {calibration_image_dir} doesn't exist!")
 
-    # TODO: Add CLI here for parameterizing this calibration script.
+    # Check the output_dir to see if a camera_matrix pickle file exists.
+    file_name = "camera_matrix.pickle"
+    camera_matrix_file = Path(output_dir)/file_name
+
+    # If the camera matrix hasn't already been computed/generated, then we'll
+    # compute it below.
+    if not camera_matrix_file.exists():
+        camera_matrix, distortion_coefficients = compute_camera_matrix(calibration_image_dir=calibration_image_dir,
+                                                                    chessboard_inside_row_width=chessboard_inside_row_width,
+                                                                    chessboard_inside_column_height=chessboard_inside_column_height)
+        # Write the camera matrix and distortion coefficients to a new pickle
+        # file.
+        with camera_matrix_file.open(mode='wb') as pickle_file:
+            camera_parameters = [camera_matrix, distortion_coefficients]
+            pickle.dump(camera_parameters, pickle_file, pickle.HIGHEST_PROTOCOL)
+        
+        # Return the newly computed values.
+        return camera_matrix, distortion_coefficients
+    
+    # Otherwise, if there is an existing file, read the camera parameters from
+    # that and return those.
+    else:
+        with camera_matrix_file.open(mode='wb') as pickle_file:
+            camera_parameters = pickle.load(pickle_file)
+        # Return the parameters loaded from file.
+        return camera_parameters[0], camera_parameters[1]
+
+def compute_camera_matrix(calibration_image_dir: Path,
+                          chessboard_inside_row_width: int,
+                          chessboard_inside_column_height: int,
+                          corner_point_refining_window_size: Optional[int] = 11) -> Tuple[np.ndarray, np.ndarray]:
+    """Computes a camera's camera matrix (K) and its distortion coefficients
+    provided a directory of chessboard calibration images.
+
+    Args:
+        calibration_image_dir (Path): Directory containing at least 10
+        chessboard calibration images.
+        chessboard_inside_row_width (int): The number of inner corners within a
+        chessboard. I.e., where the black squares meet inside the chessboard
+        along a row.
+        chessboard_inside_column_height (int): The number of inner corners
+        within a chessboard along a column.
+        corner_point_refining_window_size (Optional[int], optional): Window size
+        for point corner point refinement. Defaults to 11.
+
+    Raises:
+        Exception: Throws exception if it fails anywhere along the way.
+        Specifically, if it fails to compute the camera matrix.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Tuple containing the camera matrix,
+        distortion coefficients.
+    """
 
     # Set path to calibration image directory.
     calibration_image_dir = Path(r"./calibration")
@@ -87,17 +149,29 @@ if __name__ == "__main__":
                 cv.imshow(image_path.parts[-1], image)
                 cv.waitKey(500)
 
+    cv.destroyAllWindows()
 
     # Once we have enough (10) 3D-->2D point correspondences from corners in our
     # chessboard calibration images, we can call the calibrateCamera function to
     # obtain the camera matrix == the camera's intrinsic parameters.
     # TODO Why is calibrateCamera expecting the dimensions in reverse order?
-    retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv.calibrateCamera(objectPoints=world_points,
+    # NOTE Don't need the R, T that this function returns.
+    retval, cameraMatrix, distCoeffs, _, _ = cv.calibrateCamera(objectPoints=world_points,
                                                                         imagePoints=image_points,
                                                                         imageSize=image_gray.shape[::-1],
                                                                         cameraMatrix=None,
                                                                         distCoeffs=None)
     
-
+    if retval == False:
+        raise Exception(f"Failed to compute camera matrix!")
     
-    cv.destroyAllWindows()
+    print(f"Successfully computed camera matrix (K):\n{cameraMatrix}")
+    print(f"Successfully computed camera distortion coefficients:\n{distCoeffs}")
+
+    return cameraMatrix, distCoeffs
+
+if __name__ == "__main__":
+
+    # TODO: Add CLI here for parameterizing this calibration script.
+    _, _ = compute_camera_matrix()
+    
