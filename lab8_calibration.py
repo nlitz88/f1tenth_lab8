@@ -1,43 +1,69 @@
 """Script that implements the calibration process required for lab 8."""
 
+from typing import Tuple
 import cv2 as cv
+import numpy as np
+from pathlib import Path
 
 
 # Referencing https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
 # for details on the calibration process.
 
-# Need at least 10 test patterns for camera calibration. NOTE: Thought we only
-# needed 6 (as each point correspondence gives us 2 linearly independent
-# equations), but there are more unknowns we're solving for here (distortion).
 
-# Most importantly, need 3D points and the 2D points in the image they
-# correspond to.
 
-# An "easy" way of obtaining 3D points and corresponding 2D points is to use
-# some sort of fiducial (like a checkerboard), or some sort of object with known
-# dimensions. In the case of the checkerboard we'll use, we know the size of
-# each square and we know where each square is with respect to the top-leftmost
-# corner of the checkerboard, where that top left corner is what we'll treat as
-# the world origin. Therefore, with one picture of a checkerboard, we'll get
-# multiple 3D points to work with.
+# def get_chessboard_image_points(image: np.ndarray,
+#                                 pattern_size: Tuple(),
 
-# The fact that we know the size of the squares allows us to figure out where
-# the points on the board are from us. Why? Because the size of the square in
-# the pixel/image plane is going to be some scale factor bigger or smaller than
-# the object--where that scale factor is proportional to the distance. However,
-# I'm not actually sure we have all the information we need to know what the 3D
-# positions are--how are we possibly getting point correspondences then?
 
-# TODO: Okay, a question I guess I have then: Looking at this opencv tutorial on
-# calibration, how are we actually obtaining 3D points? I mean, again, assuming
-# you know how big the object really is, in theory, you could determine how far
-# away it is. But I feel like you'd at least need the focal length and pixel
-# scale, no? 
-# ANSWER: Correct, you need the camera intrinsics to be able to do this
-# properly.
-# https://stackoverflow.com/questions/59937813/finding-depth-of-an-object-in-an-image-given-coordinates-of-object-in-image-fram
+#                       )
+# retval, corners = cv.findChessboardCorners(image=None,
+#                                            patternSize=(),
+#                                            corners=None,
+#                                            flags=None)
 
-# Okay, so if that's the case, then how are we getting 3D-->2D point
-# correspondences if we can't obtain 3D locations of checkerboard locations yet?
-# Or is there some trick we can use?
+# 2. Solve for camera intrinsic matrix (K).
+# Using the 3D-->2D point correspondences obtained across all the images in the
+# previous step.
 
+
+if __name__ == "__main__":
+
+    # TODO: Add CLI here for parameterizing this calibration script.
+
+    # Set path to calibration image directory.
+    calibration_image_dir = Path(r"./calibration")
+    calibration_image_paths = [path for path in calibration_image_dir.iterdir() if path.is_file()]
+
+    # Create lists for resulting 3D points and 2D points.
+    world_points = []
+    image_points = []
+
+    # For each image:
+    for image_path in calibration_image_paths:
+
+        # 1. Find the corners points in the chessboard image.
+
+        # 2. Map those corner points to 3D world points based on their relative
+        #    position to the top-left-most corner point.
+
+        # 3. Store each corner's newly determined 3D world point.
+
+        # 4. Store the corner's corresponding 2D image point.
+
+
+
+        # 3. Add 
+
+    # 1. Find corner points in each image.
+    # First, need to find the corners of the chessboard in each of the provided
+    # images. Can use the opencv find chessboard corners function.
+    image_corners = 
+
+
+    # The opencv function we use assumes the top left-most corner is the
+    # world coordinate origin, and assumes that the chessboard lies flat on the XY
+    # plane of the world frame such that all points on the chessboard have Zw == 0.
+    # Based on that assumption, once we detect all the points on our chessboard from
+    # left to right, top to bottom--for each of those points, we can compute its
+    # position relative to the origin (top-left) point.
+    
