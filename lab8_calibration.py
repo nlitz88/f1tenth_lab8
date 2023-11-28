@@ -26,9 +26,33 @@ from pathlib import Path
 # previous step.
 
 
-def world_points_from_chessboard_corners(chessboard_corners: np.ndarray) -> list:
+# def world_points_from_chessboard_corners(chessboard_corners: np.ndarray) -> list:
 
-    pass
+#     # Essentially, we already know exactly what this array is going to look
+#     # like, whether we know the square size or not. Why? Because in every image,
+#     # we're expecting to find corner points for the exact same pattern--a
+#     # pattern that we already know.
+
+#     # Therefore, if the pattern is 6x8 (for example), then we know that we're
+#     # ALWAYS going to get 48 corner points if the pattern was found.
+
+#     # AND, we know the first row of those corner points is separated by 1
+#     # square, we know each row is separated by one square, and we know the top
+#     # leftmost point is the world origin (0,0,0). Therefore, because we know
+#     # what the 3D points are going to be right off the bat, we can just add the
+#     # same array of 3D points for every image, as long as the pattern is found!
+
+#     # The reason these same 3D points are still useful (even though they're the
+#     # same across all our images) is because they map back to different image
+#     # points! (therefore giving us linearly independent equations from different
+#     # point correspondences). 
+
+
+#     # Okay, they generate this using a meshgrid--I guess I could see how that
+#     # works.
+    
+
+#     pass
 
 
 if __name__ == "__main__":
@@ -48,6 +72,12 @@ if __name__ == "__main__":
     world_points = []
     image_points = []
 
+    # Precompute the 3D point array corresponding to each of the hxw corner
+    # points found in a single image. The tutorial constructs it rather
+    # compactly, so using their code here:
+    chessboard_world_points = np.zeros((chessboard_internal_corners_row_width*chessboard_internal_corners_column_height, 3), np.float32)
+    chessboard_world_points[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
+
     # For each image:
     for image_path in calibration_image_paths:
         
@@ -66,11 +96,17 @@ if __name__ == "__main__":
         if retval == True:
 
             # Map those corner points to 3D world points based on their relative
-            # position to the top-left-most corner point.
-            print(corners.shape)
+            # position to the top-left-most corner point. Because these are all
+            # measured from the origin of the world frame, these will be the
+            # same for every image that corners are found in. Therefore, just
+            # take the 3D point array computed above (that is common to every
+            # chessboard image with corners) and add it to the list of 3D world
+            # points.
+            world_points.append(chessboard_world_points)
 
             # Refine the 2D image points using cornerSubPix according to
             # tutorial.
+            
 
             # Add the newly refined 2D corner point to the list of image points.
             
