@@ -253,16 +253,16 @@ def get_camera_height(depth_calibration_image: Path,
                                                                chessboard_inside_column_height=6)
     
     # Undistort the loaded image.
-    new_image = undistort_image(image=image,
-                                camera_matrix=camera_matrix,
-                                distortion_coefficients=distortion_coefficients)
-    print(f"New image shape: {new_image.shape}")
+    # new_image = undistort_image(image=image,
+    #                             camera_matrix=camera_matrix,
+    #                             distortion_coefficients=distortion_coefficients)
+    # print(f"New image shape: {new_image.shape}")
 
-    cv.imshow("Original image", image)
-    cv.waitKey(1000)
-    cv.imshow("Undistorted iamge", new_image)
-    cv.waitKey(10000)
-    cv.destroyAllWindows()
+    # cv.imshow("Original image", image)
+    # cv.waitKey(1000)
+    # cv.imshow("Undistorted iamge", new_image)
+    # cv.waitKey(10000)
+    # cv.destroyAllWindows()
 
     # Parse the camera matrix for its intrinsic parameters.
     cx = camera_matrix[0, 2]
@@ -328,13 +328,20 @@ if __name__ == "__main__":
     # camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
     #                                              chessboard_inside_column_height=8)
 
-    # height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
-    #                             object_depth_m=0.4,
-    #                             point_coords=(0,0))
-    
+    height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
+                                object_depth_m=0.4,
+                                point_coords=(661,500))
+    print(f"Computed height: {height} meters.")
+    # TODO: I think the height is incorrect--need to figure out where my
+    # calibration process is going wrong (if that's what is happening).
+
     # Temporarily, load an image, and get a clicked point within it. Use this to
     # find the point on the cone we want to measure to.
 
 
-    image = load_image(Path(r"resource/cone_x40cm.png"))
-    x,y = get_point_coords_in_image(image)
+    # image = load_image(Path(r"resource/cone_x40cm.png"))
+    # x,y = get_point_coords_in_image(image)
+
+    # THEN, for the next task, can use the code from the height task above to
+    # get the widht of the cone, which we can then use to get depth in future
+    # images. Not sure if this is exactly what it is looking for though.
