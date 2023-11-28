@@ -200,11 +200,53 @@ def get_camera_matrix(chessboard_inside_row_width: int,
         # Return the parameters loaded from file.
         return camera_parameters[0], camera_parameters[1]
     
-def get_camera_height() -> float:
+def load_image(image_filepath: Path) -> np.ndarray:
+
+    # Check if provided image exists.
+    if not image_filepath.exists():
+        raise Exception(f"Provided image {image_filepath} doesn't exist!")
+    # If it does exist, read in the image.
+    image = cv.imread(str(image_filepath))
+    return image
+
+def undistort_image(image: np.ndarray,
+                    camera_matrix: np.ndarray,
+                    distortion_coefficients: np.ndarray) -> np.ndarray:
+    # Compute new camera matrix based on the new image. See
+    # https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+    height, width = image.shape[:2]
+    new_camera_matrix, roi = cv.getOptimalNewCameraMatrix(cameraMatrix=camera_matrix,
+                                                          distCoeffs=distortion_coefficients,
+                                                          imageSize=(width, height),
+                                                          alpha=1.0,
+                                                          newImgSize=(height, width))
+    # Undistort the image using the distortion coefficients and the new camera
+    # matrix.
+    undistorted_image = cv.undistort(src=image,
+                                     cameraMatrix=camera_matrix,
+                                     distCoeffs=distortion_coefficients,
+                                     dst=None,
+                                     newCameraMatrix=new_camera_matrix)
+    # Crop the undistorted image.
+    x, y, w, h = roi
+    undistorted_image = undistorted_image[y:y+h, x:x+w]
+    return undistort_image
+    
+def get_camera_height(depth_calibration_image: Path,
+                      object_depth_m: float,
+                      point_coords: Tuple[int, int]) -> float:
     # Returns the camera height with respect to the base link frame origin.
     # I.e., the offset in the z-direction going from the base_link origin to the
-    # camera frame origin.
+    # camera frame origin. Assumes the base_link is at the same level as the
+    # ground.
 
+    # Check if the provided calibration image file exists.
+    if not depth_calibration_image.exists():
+        raise Exception(f"Provided depth calibration image {depth_calibration_image} doesn't exist!")
+    # Read in example image.
+    image = cv.imread(str(depth_calibration_image))
+
+    # Undistort
 
     # Undistort image using distortion coefficients obtained from calibration
     # (if necessary).
