@@ -219,7 +219,7 @@ def undistort_image(image: np.ndarray,
                                                           distCoeffs=distortion_coefficients,
                                                           imageSize=(width, height),
                                                           alpha=1.0,
-                                                          newImgSize=(height, width))
+                                                          newImgSize=(width, height))
     # Undistort the image using the distortion coefficients and the new camera
     # matrix.
     undistorted_image = cv.undistort(src=image,
@@ -230,7 +230,7 @@ def undistort_image(image: np.ndarray,
     # Crop the undistorted image.
     x, y, w, h = roi
     undistorted_image = undistorted_image[y:y+h, x:x+w]
-    return undistort_image
+    return undistorted_image
     
 def get_camera_height(depth_calibration_image: Path,
                       object_depth_m: float,
@@ -240,16 +240,29 @@ def get_camera_height(depth_calibration_image: Path,
     # camera frame origin. Assumes the base_link is at the same level as the
     # ground.
 
-    # Check if the provided calibration image file exists.
-    if not depth_calibration_image.exists():
-        raise Exception(f"Provided depth calibration image {depth_calibration_image} doesn't exist!")
-    # Read in example image.
-    image = cv.imread(str(depth_calibration_image))
+    # Attempt to load the provided calibration image.
+    try:
+        image = load_image(image_filepath=depth_calibration_image)
+    except Exception as exc:
+        print(f"Failed to load image {depth_calibration_image}. Quitting.")
+        raise exc
 
-    # Undistort
+    # Get the camera matrix and distortion coefficients before you can undistort
+    # the image.
+    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_inside_row_width=6,
+                                                               chessboard_inside_column_height=8)
+    
+    # Undistort the loaded image.
+    new_image = undistort_image(image=image,
+                                camera_matrix=camera_matrix,
+                                distortion_coefficients=distortion_coefficients)
+    print(f"New image shape: {new_image.shape}")
 
-    # Undistort image using distortion coefficients obtained from calibration
-    # (if necessary).
+    cv.imshow("Original image", image)
+    cv.waitKey(1000)
+    cv.imshow("Undistorted iamge", new_image)
+    cv.waitKey(10000)
+    cv.destroyAllWindows()
 
     # The upshot of this function is probably to figure out the extrinsics of
     # the camera with respect to the car origin. I.e., if we observe something
@@ -264,6 +277,10 @@ def get_camera_height(depth_calibration_image: Path,
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
-    camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
-                                                 chessboard_inside_column_height=8)
+    # camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
+    #                                              chessboard_inside_column_height=8)
+
+    height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
+                                object_depth_m=0.4,
+                                point_coords=(0,0))
     
