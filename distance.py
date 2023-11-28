@@ -262,6 +262,30 @@ def get_camera_height(depth_calibration_image: Path,
     cv.waitKey(10000)
     cv.destroyAllWindows()
 
+    # Parse the camera matrix for its intrinsic parameters.
+    cx = camera_matrix[0, 2]
+    cy = camera_matrix[1, 2]
+    fx = camera_matrix[0, 0]
+    fy = camera_matrix[1,1]
+    
+    # Basically, have to do the reverse of multiplying each point by the K
+    # matrix. I.e., you multiply points in the film plane by K to project them
+    # into the pixel plane. For the reverse, have to multiply by the inverse of
+    # K (or just do the operations on each element in reverse, I guess). Should
+    # verify this.
+    # TODO: Make sure these points are being parsed in the correct order.
+    point_x_px, point_y_px = point_coords
+    
+    point_x_film = (point_x_px - cx)/fx
+    point_y_film = (point_y_px - cy)/fy
+
+    point_x_cam = point_x_film*object_depth_m
+    point_y_cam = point_y_film*object_depth_m
+    point_z_cam = object_depth_m
+
+    # Camera height is the y component.
+    return point_y_cam
+
     # The upshot of this function is probably to figure out the extrinsics of
     # the camera with respect to the car origin. I.e., if we observe something
     # in the camera frame (have a 3D camera point), we are going to want to be
@@ -270,7 +294,6 @@ def get_camera_height(depth_calibration_image: Path,
     # between these frames (as cameras/opencv conventionally use xyz not as
     # RHR), but the main thing is that there is ONLY a translation component
     # along the car's z-axis.
-    pass
 
 if __name__ == "__main__":
 
@@ -281,4 +304,7 @@ if __name__ == "__main__":
     height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
                                 object_depth_m=0.4,
                                 point_coords=(0,0))
+    
+    # Temporarily, load an image, and get a clicked point within it. Use this to
+    # find the point on the cone we want to measure to.
     
