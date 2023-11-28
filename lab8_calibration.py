@@ -14,6 +14,32 @@ def get_camera_matrix(chessboard_inside_row_width: int,
                       chessboard_inside_column_height: int,
                       output_dir: Optional[Path] = Path.cwd(),
                       calibration_image_dir: Optional[Path] = Path.cwd()/"calibration") -> Tuple[np.ndarray, np.ndarray]:
+    """Computes camera intrinsics provided calibration chessboard
+    characteristics and calibration images. Will attempt to load existing
+    intrinsics file from the specified output directory. If none found, will
+    recompute the intrinsics and write them to disk.
+
+    Args:
+        chessboard_inside_row_width (int):The number of inner corners within a
+        chessboard. I.e., where the black squares meet inside the chessboard
+        along a row.
+        chessboard_inside_column_height (int): The number of inner corners
+        within a chessboard along a column.
+        output_dir (Optional[Path], optional): Directory that intrinsics file
+        will be written to. Defaults to directory you invoke this function from
+        (your current working directory at runtime).
+        calibration_image_dir (Optional[Path], optional): Directory containing
+        at least 10 images of the chessboard for calibration. Defaults to
+        Path.cwd()/"calibration".
+
+    Raises:
+        Exception: If provided output directory does not exist.
+        Exception: If provided calibration image directory does not exist.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Camera matrix (K), distortion
+        coefficients.
+    """
     
     # Check inputs.
     if not output_dir.exists():
