@@ -2,9 +2,11 @@
 
 from typing import Optional, Tuple
 import cv2 as cv
+from matplotlib.backend_bases import MouseButton
 import numpy as np
 from pathlib import Path
 import pickle
+import matplotlib.pyplot as plt
 
 
 # Referencing https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
@@ -295,16 +297,44 @@ def get_camera_height(depth_calibration_image: Path,
     # RHR), but the main thing is that there is ONLY a translation component
     # along the car's z-axis.
 
+def get_point_coords_in_image(image: np.ndarray) -> Tuple[int, int]:
+    """Returns the x,y pixel coordinates of where the mouse was clicked in the
+    provided image.
+
+    Args:
+        image (np.ndarray): Image as ndarray.
+
+    Returns:
+        Tuple[int, int]: (x,y) pixel coordinates.
+    """
+
+    # Show image on plot.
+    image_plot = plt.imshow(image[:,:,::-1])
+
+    # Set up the click event listener.
+    def on_click(event):
+        if event.button is MouseButton.LEFT and event.inaxes:
+            print(f"Clicked at location x: {event.xdata}, y: {event.ydata}")
+    binding_id = plt.connect('button_press_event', on_click)
+
+    plt.show()
+
+    return 0,0
+
+
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
     # camera_matrix, dist_coef = get_camera_matrix(chessboard_inside_row_width=6,
     #                                              chessboard_inside_column_height=8)
 
-    height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
-                                object_depth_m=0.4,
-                                point_coords=(0,0))
+    # height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
+    #                             object_depth_m=0.4,
+    #                             point_coords=(0,0))
     
     # Temporarily, load an image, and get a clicked point within it. Use this to
     # find the point on the cone we want to measure to.
-    
+
+
+    image = load_image(Path(r"resource/cone_x40cm.png"))
+    x,y = get_point_coords_in_image(image)
