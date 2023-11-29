@@ -51,16 +51,16 @@ if __name__ == "__main__":
     lane_image = load_image(Path(r"./resource/lane.png"))
     blurred_image = blur_image(image=lane_image, blur_radius=17)
     hsv_image = cv.cvtColor(src=blurred_image, code=cv.COLOR_BGR2HSV)
-    lower_hsv_bound = np.array([21, 42, 70])
+    lower_hsv_bound = np.array([21, 50, 70])
     upper_hsv_bound = np.array([37, 200, 200])
     masked_hsv_image = mask_image(hsv_image=hsv_image,
                                   lower_hsv_value=lower_hsv_bound,
                                   upper_hsv_value=upper_hsv_bound)
     
-    cv.imshow("Hsv image", hsv_image)
-    cv.imshow("Mask", masked_hsv_image)
-    cv.waitKey(10000)
-    cv.cvtColor(src=masked_hsv_image, code=cv.COLOR_HSV2BGR)
+    # cv.imshow("Hsv image", hsv_image)
+    # cv.imshow("Mask", masked_hsv_image)
+    # cv.waitKey(5000)
+    
 
     # plt.subplot(121),plt.imshow(lane_image[:,:,::-1]),plt.title('Original')
     # plt.xticks([]), plt.yticks([])
@@ -80,4 +80,10 @@ if __name__ == "__main__":
     # binding_id = plt.connect('button_press_event', on_click)
     # plt.show()
 
+    # Find contours on mask, then draw them on the original image.
+    contours, hierarchy = cv.findContours(image=masked_hsv_image, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+    lane_image_with_contours = cv.drawContours(image=lane_image, contours=contours, contourIdx=-1, color=(0,255,0), thickness=3)
+    # Display the original image with the contours drawn on it.
+    cv.imshow("Lane Lines", lane_image_with_contours)
+    cv.imwrite("lane_markings.png", lane_image_with_contours)
     cv.destroyAllWindows()
