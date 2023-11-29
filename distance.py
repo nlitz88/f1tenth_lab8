@@ -416,9 +416,10 @@ if __name__ == "__main__":
     # x,y = get_point_coords_in_image(image)
 
     uknown_cone_ground_point = (594, 416)
-    x_car, y_car = car_ground_point_from_pixel_point(camera_height_m=height,
-                                                     camera_matrix=camera_matrix,
-                                                     pixel_coords_px=uknown_cone_ground_point)
+    x_car_m, y_car_m = car_ground_point_from_pixel_point(camera_height_m=height,
+                                                         camera_matrix=camera_matrix,
+                                                         pixel_coords_px=uknown_cone_ground_point)
     # Distance to ground plate point == X component == depth.
-    print(f"Distance to ground plane point in the x direction: {x_car:.4f} meters.")
+    print(f"Distance to ground plane point in the x direction: {x_car_m:.4f} meters.")
+    print(f"Car coordinates: x_car: {x_car_m:.4f}, y_car: {y_car_m:.4f}")
     
