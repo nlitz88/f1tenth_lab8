@@ -385,13 +385,23 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
     y_cam_m = camera_height_m
     z_cam_m = y_cam_m*focal_length_y_px/y_film
     x_cam_m = x_film*z_cam_m/focal_length_x_px
+    print(f"Camera coordinates: x_cam: {x_cam_m} y_cam: {y_cam_m} z_cam: {z_cam_m}")
 
-    print(f"Pixel coords:\n{pixel_coords_homogeneous}")
-    print(f"Film coords:\n{film_plane_coords_homogeneous}")
+    # print(f"Pixel coords:\n{pixel_coords_homogeneous}")
+    # print(f"Film coords:\n{film_plane_coords_homogeneous}")
     # print(f"Extracted film coords: x: {x_film_m}, y: {y_film_m}")
     # print(f"z_")
 
-    return (0.0,0.0)
+    # Convert/transform/project 3D camera coordinates into car frame using the
+    # following:
+    # x_cam = -y_car
+    # y_cam = -z_car
+    # z_cam = +x_car
+    x_car_m = z_cam_m
+    y_car_m = -x_cam_m
+    z_car_m = -y_cam_m + camera_height_m # Rotation and translation.
+
+    return (x_car_m, y_car_m)
 
 
 
@@ -413,7 +423,7 @@ if __name__ == "__main__":
     # find the point on the cone we want to measure to.
 
 
-    # image = load_image(Path(r"resource/cone_x40cm.png"))
+    # image = load_image(Path(r"resource/cone_unknown.png"))
     # x,y = get_point_coords_in_image(image)
 
     # TODO: Probably want to make function that gets the camera matrix and then
@@ -426,9 +436,10 @@ if __name__ == "__main__":
     print(f"Camera matrix: {camera_matrix}")
     print(f"Inverted camera matrix: {np.linalg.inv(camera_matrix)}")
 
+    uknown_cone_ground_point = (594, 416)
     x_car, y_car = car_ground_point_from_pixel_point(camera_height_m=height,
                                                      camera_matrix=camera_matrix,
-                                                     pixel_coords_px=[0,0])
+                                                     pixel_coords_px=uknown_cone_ground_point)
     # Distance to ground plate point == X component == depth.
     print(f"Distance to ground plane point in the x direction: {x_car}")
     
