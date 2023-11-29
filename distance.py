@@ -420,6 +420,6 @@ if __name__ == "__main__":
                                                          camera_matrix=camera_matrix,
                                                          pixel_coords_px=uknown_cone_ground_point)
     # Distance to ground plate point == X component == depth.
-    print(f"Distance to ground plane point in the x direction: {x_car_m:.4f} meters.")
-    print(f"Car coordinates: x_car: {x_car_m:.4f}, y_car: {y_car_m:.4f}")
+    print(f"Distance to ground plane point in the x direction: {x_car_m:.4f}m.")
+    print(f"Car coordinates: x_car: {x_car_m:.4f}m, y_car: {y_car_m:.4f}m.")
     

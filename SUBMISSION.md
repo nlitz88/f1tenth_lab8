@@ -1,7 +1,7 @@
 # Lab 8: Vision Lab
 
 ## The x, y distance of the unknown cones?
-(FILL ME IN)
+x_car: 0.6135m, y_car: -0.1277m
 
 ## Lane Detection Result Image
 (FILL ME IN)
