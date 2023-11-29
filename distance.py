@@ -364,33 +364,28 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
         frame.
     """
 
-    # Grab the x and y pixel coordinates from the provided tuple. Also grab the
-    # focal length from the camera matrix.
+    # Grab the x and y pixel coordinates from the provided tuple.
     x_px, y_px = pixel_coords_px
+    # Extract parameters from camera matrix.
     focal_length_x_px = camera_matrix[0,0]
     focal_length_y_px = camera_matrix[1,1]
-
-    # Create a homogenious coordinate out of the x and y pixel coordinates.
-    pixel_coords_homogeneous = np.array([x_px, y_px, 1], np.int32).reshape((3,1))
-
-    # Compute the film plane point by multiplying the pixel coordinate point by
-    # the inverse of the camera matrix.
-    film_plane_coords_homogeneous = np.matmul(np.linalg.inv(camera_matrix), pixel_coords_homogeneous)
-    x_film, y_film = tuple(film_plane_coords_homogeneous[:2,0])
+    offset_x_px = camera_matrix[0,2]
+    offset_y_px = camera_matrix[1,2]
+    # Offset the pixel coordinates by the pixel plane offset. Don't want to get
+    # film plane coordinates in mm, as we don't know the size of the sensor, and
+    # wouldn't be able to obtain the focal length in terms of mm (which would be
+    # needed below for the projection calculations).
+    x_film_px = (x_px - offset_x_px)
+    y_film_px = (y_px - offset_y_px)
 
     # Compute the depth using similar triangles and the fact that the height of
     # the camera is equal to the Y-component of the 3D camera point.
     # TODO: pretty sure the units are wrong here. Refactor this to just use the
     # more straightforward approach.
     y_cam_m = camera_height_m
-    z_cam_m = y_cam_m*focal_length_y_px/y_film
-    x_cam_m = x_film*z_cam_m/focal_length_x_px
-    print(f"Camera coordinates: x_cam: {x_cam_m} y_cam: {y_cam_m} z_cam: {z_cam_m}")
-
-    # print(f"Pixel coords:\n{pixel_coords_homogeneous}")
-    # print(f"Film coords:\n{film_plane_coords_homogeneous}")
-    # print(f"Extracted film coords: x: {x_film_m}, y: {y_film_m}")
-    # print(f"z_")
+    z_cam_m = y_cam_m*focal_length_y_px/y_film_px
+    x_cam_m = x_film_px*z_cam_m/focal_length_x_px
+    # print(f"Camera coordinates: x_cam: {x_cam_m} y_cam: {y_cam_m} z_cam: {z_cam_m}")
 
     # Convert/transform/project 3D camera coordinates into car frame using the
     # following:
@@ -403,8 +398,6 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
 
     return (x_car_m, y_car_m)
 
-
-
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
@@ -415,31 +408,17 @@ if __name__ == "__main__":
                                 object_depth_m=0.4,
                                 point_coords=(661,500),
                                 camera_matrix=camera_matrix)
-    print(f"Computed height: {height} meters.")
-    # Currently returning 0.13879840542827868 meters, or about 13 cm--which
-    # seems reasonable.
+    print(f"Computed height: {height:.4f} meters.")
 
     # Temporarily, load an image, and get a clicked point within it. Use this to
     # find the point on the cone we want to measure to.
-
-
     # image = load_image(Path(r"resource/cone_unknown.png"))
     # x,y = get_point_coords_in_image(image)
-
-    # TODO: Probably want to make function that gets the camera matrix and then
-    # returns it as an object or something like that.
-    # OR, rather, should update the get_camera_height function to accept a
-    # camera matrix, rather than getting it inside. That would be better design.
-
-    
-    
-    print(f"Camera matrix: {camera_matrix}")
-    print(f"Inverted camera matrix: {np.linalg.inv(camera_matrix)}")
 
     uknown_cone_ground_point = (594, 416)
     x_car, y_car = car_ground_point_from_pixel_point(camera_height_m=height,
                                                      camera_matrix=camera_matrix,
                                                      pixel_coords_px=uknown_cone_ground_point)
     # Distance to ground plate point == X component == depth.
-    print(f"Distance to ground plane point in the x direction: {x_car}")
+    print(f"Distance to ground plane point in the x direction: {x_car:.4f} meters.")
     
