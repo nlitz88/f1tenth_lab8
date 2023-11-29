@@ -364,25 +364,35 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
         frame.
     """
 
-    # Grab the x and y pixel coordinates from the provided tuple.
+    # Grab the x and y pixel coordinates from the provided tuple. Also grab the
+    # focal length from the camera matrix.
     x_px, y_px = pixel_coords_px
+    focal_length_x_px = camera_matrix[0,0]
+    focal_length_y_px = camera_matrix[1,1]
 
-    
+    # Create a homogenious coordinate out of the x and y pixel coordinates.
+    pixel_coords_homogeneous = np.array([x_px, y_px, 1], np.int32).reshape((3,1))
 
-    
+    # Compute the film plane point by multiplying the pixel coordinate point by
+    # the inverse of the camera matrix.
+    film_plane_coords_homogeneous = np.matmul(np.linalg.inv(camera_matrix), pixel_coords_homogeneous)
+    x_film, y_film = tuple(film_plane_coords_homogeneous[:2,0])
 
+    # Compute the depth using similar triangles and the fact that the height of
+    # the camera is equal to the Y-component of the 3D camera point.
+    # TODO: pretty sure the units are wrong here. Refactor this to just use the
+    # more straightforward approach.
+    y_cam_m = camera_height_m
+    z_cam_m = y_cam_m*focal_length_y_px/y_film
+    x_cam_m = x_film*z_cam_m/focal_length_x_px
 
-def get_car_points_from_pixel_coords(camera_height_m: float,
-                                     pixel_coords_m: Tuple[int, int]) -> Tuple[float, float]:
-    """Computes the 3D car coordinates 
+    print(f"Pixel coords:\n{pixel_coords_homogeneous}")
+    print(f"Film coords:\n{film_plane_coords_homogeneous}")
+    # print(f"Extracted film coords: x: {x_film_m}, y: {y_film_m}")
+    # print(f"z_")
 
-    Args:
-        camera_height_m (float): _description_
-        pixel_coords_m (Tuple[int, int]): _description_
+    return (0.0,0.0)
 
-    Returns:
-        Tuple[float, float]: _description_
-    """
 
 
 if __name__ == "__main__":
@@ -415,3 +425,10 @@ if __name__ == "__main__":
     
     print(f"Camera matrix: {camera_matrix}")
     print(f"Inverted camera matrix: {np.linalg.inv(camera_matrix)}")
+
+    x_car, y_car = car_ground_point_from_pixel_point(camera_height_m=height,
+                                                     camera_matrix=camera_matrix,
+                                                     pixel_coords_px=[0,0])
+    # Distance to ground plate point == X component == depth.
+    print(f"Distance to ground plane point in the x direction: {x_car}")
+    
