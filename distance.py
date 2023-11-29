@@ -240,7 +240,8 @@ def undistort_image(image: np.ndarray,
     
 def get_camera_height(depth_calibration_image: Path,
                       object_depth_m: float,
-                      point_coords: Tuple[int, int]) -> float:
+                      point_coords: Tuple[int, int],
+                      camera_matrix: np.ndarray) -> float:
     # Returns the camera height with respect to the base link frame origin.
     # I.e., the offset in the z-direction going from the base_link origin to the
     # camera frame origin. Assumes the base_link is at the same level as the
@@ -252,23 +253,6 @@ def get_camera_height(depth_calibration_image: Path,
     except Exception as exc:
         print(f"Failed to load image {depth_calibration_image}. Quitting.")
         raise exc
-
-    # Get the camera matrix and distortion coefficients before you can undistort
-    # the image.
-    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=6,
-                                                               chessboard_vertical_inner_corners=8)
-    
-    # # Undistort the loaded image.
-    # new_image = undistort_image(image=image,
-    #                             camera_matrix=camera_matrix,
-    #                             distortion_coefficients=distortion_coefficients)
-    # print(f"New image shape: {new_image.shape}")
-
-    # cv.imshow("Original image", image)
-    # cv.waitKey(1000)
-    # cv.imshow("Undistorted iamge", new_image)
-    # cv.waitKey(10000)
-    # cv.destroyAllWindows()
 
     # Parse the camera matrix for its intrinsic parameters.
     cx = camera_matrix[0, 2]
@@ -348,7 +332,8 @@ def get_point_coords_in_image(image: np.ndarray) -> Tuple[int, int]:
 #     pass
 
 def car_ground_point_from_pixel_point(camera_height_m: float,
-                                      pixel_coords_m: Tuple[int, int]) -> Tuple[float, float]:
+                                      camera_matrix: np.ndarray,
+                                      pixel_coords_px: Tuple[int, int]) -> Tuple[float, float]:
     """Computes the 3D car coordinates with Zcar == 0 for the provided point in
     the image. Will only work for 2D points that correspond to points at the
     same Z level as the base_link of the car (must be at the same height in the
@@ -365,7 +350,11 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
         whatever the current height of the camera is with respect to the ground
         (which would include the height of the base_link off the ground), but
         we'll just approximate that the base link origin is at ground level.
-        pixel_coords_m (Tuple[int, int]): The (x,y) PIXEL COORDINATES of the
+        camera_matrix (np.ndarray): The camera matrix array obtained from
+        calibration. This is needed to convert/project the provided pixel
+        coordinates into the film plane frame, which will then be projected into
+        the 3D camera frame.
+        pixel_coords_px (Tuple[int, int]): The (x,y) PIXEL COORDINATES of the
         point you want to find the corresponding 3D points for. This MUST be a
         point ON THE GROUND / IN THE GROUND PLANE IN THE IMAGE! Otherwise, the
         resulting Xcar and Ycar components won't be accurate.
@@ -374,6 +363,13 @@ def car_ground_point_from_pixel_point(camera_height_m: float,
         Tuple[float, float]: The Xcar, Ycar location of the point in the car's
         frame.
     """
+
+    # Grab the x and y pixel coordinates from the provided tuple.
+    x_px, y_px = pixel_coords_px
+
+    
+
+    
 
 
 def get_car_points_from_pixel_coords(camera_height_m: float,
@@ -392,12 +388,13 @@ def get_car_points_from_pixel_coords(camera_height_m: float,
 if __name__ == "__main__":
 
     # TODO: Add CLI here for parameterizing this calibration script.
-    # camera_matrix, dist_coef = get_camera_matrix(chessboard_horizontal_inner_corners=6,
-    #                                              chessboard_vertical_inner_corners=8)
+    camera_matrix, distortion_coefficients = get_camera_matrix(chessboard_horizontal_inner_corners=6,
+                                                               chessboard_vertical_inner_corners=8)
 
     height = get_camera_height(Path(r"./resource/cone_x40cm.png"),
                                 object_depth_m=0.4,
-                                point_coords=(661,500))
+                                point_coords=(661,500),
+                                camera_matrix=camera_matrix)
     print(f"Computed height: {height} meters.")
     # Currently returning 0.13879840542827868 meters, or about 13 cm--which
     # seems reasonable.
@@ -408,3 +405,13 @@ if __name__ == "__main__":
 
     # image = load_image(Path(r"resource/cone_x40cm.png"))
     # x,y = get_point_coords_in_image(image)
+
+    # TODO: Probably want to make function that gets the camera matrix and then
+    # returns it as an object or something like that.
+    # OR, rather, should update the get_camera_height function to accept a
+    # camera matrix, rather than getting it inside. That would be better design.
+
+    
+    
+    print(f"Camera matrix: {camera_matrix}")
+    print(f"Inverted camera matrix: {np.linalg.inv(camera_matrix)}")
