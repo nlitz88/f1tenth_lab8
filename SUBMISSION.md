@@ -4,7 +4,7 @@
 x_car: 0.6135m, y_car: -0.1277m
 
 ## Lane Detection Result Image
-(FILL ME IN)
+![Generated Lane Markings](./lane_markings.png)
 
 ## Integrated Object Detection + Distance Calculation Result Image
 (FILL ME IN)
