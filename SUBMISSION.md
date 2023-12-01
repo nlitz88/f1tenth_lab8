@@ -4,7 +4,7 @@
 x_car: 0.6135m, y_car: -0.1277m
 
 ## Lane Detection Result Image
-![Generated Lane Markings](./lane_markings.png)
+![Generated Lane Markings](./submission_images/lane_markings.png)
 
 ## Integrated Object Detection + Distance Calculation Result Image
 (FILL ME IN)
@@ -14,7 +14,7 @@ on the ground), and compute the distance of that point? Are we supposed to do
 that?
 
 ## Nerual Network Training & Testing Loss Plot
-![Training and Validation loss plot](./f1tenth_car_detection_training_loss.png)
+![Training and Validation loss plot](./submission_images/f1tenth_car_detection_training_loss.png)
 
 ## Is FP16 faster? Why?
 FP16 inference time (ms): (FILL ME IN)
