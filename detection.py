@@ -48,6 +48,7 @@ def allocate_buffers(engine):
 
 def main():
 
+    # 1. PREPROCESSING
     trt_model_path = Path(r"./f1yolo_fp32.trt")
     test_image_path = Path(r"./resource/test_car_x60cm.png")
     # Expected output shape.
@@ -73,6 +74,7 @@ def main():
     test_image = np.array(test_image, dtype=np.float32, order="C")
 
     
+    # 2. INFERENCE
     # Set up runtime and deserialize the engine file (the TensorRT model
     f = open(trt_model_path, "rb")
     runtime = trt.Runtime(trt.Logger(trt.Logger.WARNING)) 
@@ -118,6 +120,12 @@ def main():
     # Reshape result tensor.
     result_tensor = result_tensor.reshape(output_shape)
     print(f"Reshaped output vector shape: {result_tensor.shape}")
+
+
+    # 3. POST PROCESSING.
+    # Now, begin the "post processing." For this, we basically want to run NMS
+    # on the predicted output bounding boxes (each of the 6x10==60 5-element
+    # predicted bboxes) and then draw the resulting boxes on image.
 
 if __name__ == "__main__":
 
