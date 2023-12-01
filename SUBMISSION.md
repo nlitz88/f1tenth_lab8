@@ -7,11 +7,10 @@ x_car: 0.6135m, y_car: -0.1277m
 ![Generated Lane Markings](./submission_images/lane_markings.png)
 
 ## Integrated Object Detection + Distance Calculation Result Image
-(FILL ME IN)
-# What are we supposed to do here?
+Lab handout doesn't mention this section, so going to ignore for now. As far as
+how to approach this, though:
 I could take the bottom left corner of a bounding box of a car (which should be
-on the ground), and compute the distance of that point? Are we supposed to do
-that?
+on the ground), and compute the distance of that point?
 
 ## Nerual Network Training & Testing Loss Plot
 ![Training and Validation loss plot](./submission_images/f1tenth_car_detection_training_loss.png)
