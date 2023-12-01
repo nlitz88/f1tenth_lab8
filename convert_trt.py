@@ -24,6 +24,23 @@ def f1tenth_torch_to_onnx(model_weights_path: Path,
                           input_size: Tuple,
                           batch_size: Optional[int] = 1,
                           output_directory: Optional[Path] = Path.cwd()) -> None:
+    """Converts the weights of the provided F1Tenth YOLO model to ONNX format.
+
+    Args:
+        model_weights_path (Path): Path to the model weights in torch format
+        (I.e., a ".pt" file).
+        input_size (Tuple): The dimensions of a single input to the network in
+        order (C,H,W) (Torch order).
+        batch_size (Optional[int], optional): The number of images that should
+        be passed forward through the network at a time. Defaults to 1.
+        output_directory (Optional[Path], optional): Directory the onnx model
+        should be stored in. Defaults to Path.cwd() (directory you run script
+        from).
+
+    Raises:
+        FileNotFoundError: Thrown if the provided weights file doesn't exist.
+        Exception: Thrown in the provided output directory doesn't exist.
+    """
 
     # Check to see if the model exists at the provided path.
     if not model_weights_path.exists():
@@ -62,7 +79,11 @@ def f1tenth_torch_to_onnx(model_weights_path: Path,
 # command line utility provided as a part of the TensorRT SDK. This function is
 # an example of converting an ONNX model to a TensorRT engine using the TensorRT
 # python api/library.
+
+# Following this guide:
+# https://docs.nvidia.com/deeplearning/tensorrt/quick-start-guide/index.html#convert-onnx-engine
 def onnx_to_tensorrt() -> None:
+
 
     pass
 
