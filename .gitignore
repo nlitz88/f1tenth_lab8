@@ -164,3 +164,4 @@ cython_debug/
 # Ignore any model weight files.
 *.pt
 *.onnx
+*.trt
