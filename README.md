@@ -69,12 +69,29 @@ After you are done with training the network, convert it into a TensorRT engine 
 
 Save this part of the code as 'convert_trt.py' or 'convert_trt.cpp' and 'detection.py' or 'detection.cpp'.
 
+#### Install Pytorch
+If your Jetson doesn't have Pytorch, follow [this](https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html) to install Pytorch.
+
+#### Install ONNX and matplotlib
+```
+sudo apt-get install python3-matplotlib
+sudo apt-get install python3-pip libprotoc-dev protobuf-compiler
+pip3 install onnx
+```
+
+#### Install pycuda and set up TensorRT
+If your Jetson doesn't have pycuda, follow [this](https://docs.donkeycar.com/guide/robot_sbc/tensorrt_jetson_nano/) to set up TensorRT and install pycuda. (Only do Step 2)
+
+#### Deliverable
+
+Convert the the engine using FP32 and FP16 mode and compare the speed difference. See `submission.md`.
+
 
 ## VII. Deliverables and Submission
 
 Zip your finished code onto Canvas. Name the parts as instructed.
 
-Please follow the `submission.md` in the Github repo.
+Please fill the `submission.md` in this Github repo.
 
 ## VIII: Grading Rubric
 
