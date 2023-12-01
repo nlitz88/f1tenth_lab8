@@ -7,6 +7,9 @@ import time
 from PIL import Image
 import numpy as np
 
+import tensorrt as trt
+import pycuda.driver as cuda
+import pycuda.autoinit
 
 # https://github.com/NVIDIA/TensorRT/blob/main/quickstart/IntroNotebooks/4.%20Using%20PyTorch%20through%20ONNX.ipynb
 # Slight more relevant object detection tutorial with YoloV3.
@@ -41,7 +44,7 @@ if __name__ == "__main__":
     # (Width, Height). We can tell Pillow to resize 
     resize_shape_wh = (model_input_shape_chw[2], model_input_shape_chw[1])
     test_image = Image.open(test_image_path)
-    test_image = test_image.resize(resize_shape_wh, resample=Image.BICUBIC)
+    test_image = test_image.resize(resize_shape_wh, resample=Image.Resampling.BICUBIC)
     test_image = np.array(test_image, dtype=np.float32, order="C")
 
     # Reshape the np array that used to be a PIL image into "CHW" (PyTorch shape
@@ -53,4 +56,12 @@ if __name__ == "__main__":
     # Convert the image to row major order in memory.
     test_image = np.array(test_image, dtype=np.float32, order="C")
 
-    # 
+    
+    # Set up runtime and engine.
+    f = open("f1yolo_fp32.trt", "rb")
+    runtime = trt.Runtime(trt.Logger(trt.Logger.WARNING)) 
+
+    engine = runtime.deserialize_cuda_engine(f.read())
+    context = engine.create_execution_context()
+
+    
