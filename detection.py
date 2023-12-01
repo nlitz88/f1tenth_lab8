@@ -111,10 +111,13 @@ def main():
     cuda.memcpy_dtoh_async(host_output, device_output, inference_stream)
     inference_stream.synchronize()
 
-    # Examine dimensions of output data, then we can figure out how to reshape
-    # it before post-processing.
+    # The output tensors will be flat arrays out of the engine, so need to
+    # reshape these to the expected output format to make sense of them.
     result_tensor = torch.Tensor(host_output)
     print(f"Result vector has shape: {result_tensor.shape}")
+    # Reshape result tensor.
+    result_tensor = result_tensor.reshape(output_shape)
+    print(f"Reshaped output vector shape: {result_tensor.shape}")
 
 if __name__ == "__main__":
 
