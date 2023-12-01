@@ -16,9 +16,22 @@ that?
 ## Nerual Network Training & Testing Loss Plot
 ![Training and Validation loss plot](./submission_images/f1tenth_car_detection_training_loss.png)
 
+Precision: ~94%
+
 ## Is FP16 faster? Why?
-FP16 inference time (ms): (FILL ME IN)
+FP16 inference time (ms): 19ms
 
-FP32 inference time (ms): (FILL ME IN)
+FP32 inference time (ms): 20ms
 
-You should time only the inference part and average out at least 100 inference cycles.
+Int8 inference time (ms): 12ms
+
+Honestly, it doesn't seem like the FP16 model inference was that much faster--it
+seemed to average almost the exact same time. In theory, lower precision should
+mean faster overall inference, as with smaller values, you should be able to
+perform more computations per unit of time. However, in the case of my
+GTX1050Ti (Pascal Microarchitecture), I don't think it has dedicated FP16
+hardware to do these operations any faster than the usual FP32. That would be my
+thinking in regard to why the FP16 and FP32 inference times are so similar.
+However, because the 1050 likely has hardware dedicated to integer operations,
+it can perform inference almost 2x as fast when the model is quantized into
+int8.

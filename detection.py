@@ -104,6 +104,7 @@ def main():
     # Copy the input image into the host_input page_locked memory.
     host_input = test_image
     # Copy the image data in the hosts memory to the device's memory.
+    inference_start = time.perf_counter()
     cuda.memcpy_htod_async(device_input, host_input, inference_stream)
     # Run inference. This essentially tells teh CPU to take the input and pass
     # it through the engine, place the result in the output location.
@@ -112,6 +113,8 @@ def main():
     # Copy the results from GPU memory back to the host.
     cuda.memcpy_dtoh_async(host_output, device_output, inference_stream)
     inference_stream.synchronize()
+    inference_end = time.perf_counter()
+    print(f"Inference performed in {(inference_end - inference_start)*1000:.2f}ms.")
 
     # The output tensors will be flat arrays out of the engine, so need to
     # reshape these to the expected output format to make sense of them.
@@ -121,11 +124,18 @@ def main():
     result_tensor = result_tensor.reshape(output_shape)
     print(f"Reshaped output vector shape: {result_tensor.shape}")
 
-
     # 3. POST PROCESSING.
     # Now, begin the "post processing." For this, we basically want to run NMS
     # on the predicted output bounding boxes (each of the 6x10==60 5-element
-    # predicted bboxes) and then draw the resulting boxes on image.
+    # predicted bboxes) and return those bounding boxes above the specified
+    # confidence threshold.
+
+    # Then, as a debugging step, can draw those bounding boxes on the image.
+
+    # Gameplan:
+    # For the lab, only need to benchmark inference times. Don't need to do all
+    # the post processing, in theory.
+    # So, let's 
 
 if __name__ == "__main__":
 
