@@ -4,8 +4,12 @@ inference on our F1Tenth Car Detection (Object Detection) model.
 
 from pathlib import Path
 import time
+from typing import Tuple
 from PIL import Image
 import numpy as np
+import cv2 as cv
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 import tensorrt as trt
 import pycuda.driver as cuda
@@ -46,6 +50,87 @@ def allocate_buffers(engine):
             device_output = cuda.mem_alloc(host_output.nbytes)
     return host_input, device_input, host_output, device_output
 
+def DisplayLabel(img, bboxs):
+    # image = np.transpose(image.copy(), (1, 2, 0))
+    # fig, ax = plt.subplots(1, figsize=(6, 8))
+    image = cv.cvtColor(img.copy(), cv.COLOR_BGR2RGB)
+    fig, ax = plt.subplots(1)
+    edgecolor = [1, 0, 0]
+    if len(bboxs) == 1:
+        bbox = bboxs[0]
+        ax.add_patch(patches.Rectangle((bbox[0] - bbox[2]/2, bbox[1] - bbox[3]/2), bbox[2], bbox[3], linewidth=1, edgecolor=edgecolor, facecolor='none'))
+    elif len(bboxs) > 1:
+        for bbox in bboxs:
+            ax.add_patch(patches.Rectangle((bbox[0] - bbox[2]/2, bbox[1] - bbox[3]/2), bbox[2], bbox[3], linewidth=1, edgecolor=edgecolor, facecolor='none'))
+    ax.imshow(image)
+    # plt.show()
+    plt.savefig("detection_output.png")
+
+# convert from [c_x, c_y, w, h] to [x_l, y_l, x_r, y_r]
+def bbox_convert(c_x, c_y, w, h):
+    return [c_x - w/2, c_y - h/2, c_x + w/2, c_y + h/2]
+
+# convert from [x_l, y_l, x_r, x_r] to [c_x, c_y, w, h]
+def bbox_convert_r(x_l, y_l, x_r, y_r):
+    return [x_l/2 + x_r/2, y_l/2 + y_r/2, x_r - x_l, y_r - y_l]
+
+# calculating IoU
+def IoU(a, b):
+    # referring to IoU algorithm in slides
+    inter_w = max(0, min(a[2], b[2]) - max(a[0], b[0]))
+    inter_h = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    inter_ab = inter_w * inter_h
+    area_a = (a[3] - a[1]) * (a[2] - a[0])
+    area_b = (b[3] - b[1]) * (b[2] - b[0])
+    union_ab = area_a + area_b - inter_ab
+    if union_ab == 0:
+        return 0
+    return inter_ab / union_ab
+
+def grid_cell(cell_indx, cell_indy, anchor_size):
+    stride_0 = anchor_size[1]
+    stride_1 = anchor_size[0]
+    return np.array([cell_indx * stride_0, cell_indy * stride_1, cell_indx * stride_0 + stride_0, cell_indy * stride_1 + stride_1])
+
+def label_to_box_xyxy(result: torch.Tensor,
+                      input_shape: Tuple,
+                      output_shape: Tuple,
+                      anchor_size: tuple,
+                      threshold = 0.9):
+    validation_result = []
+    result_prob = []
+    for ind_row in range(output_shape[2]):
+        for ind_col in range(output_shape[3]):
+            grid_info = grid_cell(ind_col, ind_row, anchor_size)
+            validation_result_cell = []
+            if result[0, ind_row, ind_col] >= threshold:
+                c_x = grid_info[0] + anchor_size[1]/2 + result[1, ind_row, ind_col]
+                c_y = grid_info[1] + anchor_size[0]/2 + result[2, ind_row, ind_col]
+                w = result[3, ind_row, ind_col] * input_shape[2]
+                h = result[4, ind_row, ind_col] * input_shape[3]
+                x1, y1, x2, y2 = bbox_convert(c_x, c_y, w, h)
+                x1 = np.clip(x1, 0, input_shape[3])
+                x2 = np.clip(x2, 0, input_shape[3])
+                y1 = np.clip(y1, 0, input_shape[2])
+                y2 = np.clip(y2, 0, input_shape[2])
+                validation_result_cell.append(x1)
+                validation_result_cell.append(y1)
+                validation_result_cell.append(x2)
+                validation_result_cell.append(y2)
+                result_prob.append(result[0, ind_row, ind_col])
+                validation_result.append(validation_result_cell)
+    validation_result = np.array(validation_result)
+    result_prob = np.array(result_prob)
+    return validation_result, result_prob
+
+def voting_suppression(result_box, iou_threshold = 0.5):
+    votes = np.zeros(result_box.shape[0])
+    for ind, box in enumerate(result_box):
+        for box_validation in result_box:
+            if IoU(box_validation, box) > iou_threshold:
+                votes[ind] += 1
+    return (-votes).argsort()
+
 def main():
 
     # 1. PREPROCESSING
@@ -57,10 +142,13 @@ def main():
     output_shape = (1,5,6,10)
     # Model input shape (b, c, h, w)
     model_input_shape = (1, 3, 180, 320)
+    # Compute the size of the anchor boxes.
+    anchor_size = [(model_input_shape[2] / output_shape[2]), (model_input_shape[3] / output_shape[3])]
     # Take the model input shape and convert it to the format Pillow accepts
     # (Width, Height). We can tell Pillow to resize 
     resize_shape_wh = (model_input_shape[3], model_input_shape[2])
     test_image = Image.open(test_image_path)
+    raw_image_shape = test_image.size
     test_image = test_image.resize(resize_shape_wh, resample=Image.Resampling.BICUBIC)
     test_image = np.array(test_image, dtype=np.float32, order="C")
 
@@ -132,10 +220,29 @@ def main():
 
     # Then, as a debugging step, can draw those bounding boxes on the image.
 
-    # Gameplan:
-    # For the lab, only need to benchmark inference times. Don't need to do all
-    # the post processing, in theory.
-    # So, let's 
+    # UPDATE: The notebook already provides functions for working with this
+    # particular model's outputs. So, once we reshape above, we should be able
+    # to use the existing functions to get things into the proper form.
+
+    # display detection
+    voting_iou_threshold = 0.5
+    confi_threshold = 0.4
+
+    # result = model(image_t)
+    # result = result.detach().cpu().numpy()
+    # NOTE Need to know what the output dimensions are. I.e., what shape is
+    # result here?
+    bboxes, result_prob = label_to_box_xyxy(result=result_tensor[0],
+                                           input_shape=model_input_shape,
+                                           output_shape=output_shape,
+                                           anchor_size=anchor_size)
+    vote_rank = voting_suppression(bboxes, voting_iou_threshold)
+    bbox = bboxes[vote_rank[0]]
+    [c_x, c_y, w, h] = bbox_convert_r(bbox[0], bbox[1], bbox[2], bbox[3])
+    bboxs_2 = np.array([[c_x, c_y, w, h]])
+    # DisplayLabel(np.transpose(test_image[0], (1, 2, 0)), bboxs_2)
+    DisplayLabel(img=test_image, bboxs=bboxs_2)
+
 
 if __name__ == "__main__":
 
