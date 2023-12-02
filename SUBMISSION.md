@@ -15,6 +15,8 @@ on the ground), and compute the distance of that point?
 ## Nerual Network Training & Testing Loss Plot
 ![Training and Validation loss plot](./submission_images/f1tenth_car_detection_training_loss.png)
 
+The model weights can be downloaded [here](https://drive.google.com/drive/folders/1_FXfAckOVohUHZ1mvVGkelPap-XDK4PI?usp=sharing).
+
 Precision: ~94%
 
 ## Is FP16 faster? Why?
