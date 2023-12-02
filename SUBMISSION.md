@@ -30,7 +30,16 @@ mean faster overall inference, as with smaller values, you should be able to
 perform more computations per unit of time. However, in the case of my
 GTX1050Ti (Pascal Microarchitecture), I don't think it has dedicated FP16
 hardware to do these operations any faster than the usual FP32. That would be my
-thinking in regard to why the FP16 and FP32 inference times are so similar.
+thinking as to why the FP16 and FP32 inference times are so similar.
 However, because the 1050 likely has hardware dedicated to integer operations,
 it can perform inference almost 2x as fast when the model is quantized into
 int8.
+
+## Tensor RT Deployed Model Predictions
+It looks like there were some issues with the code thrown together for taking the
+TRT engine's output and lining them up on the source image--but at a high level,
+the predictions seem to be reasonable.
+
+![Alt text](./submission_images/hall_car_prediction.png)
+
+![Alt text](./submission_images/test_car_x60cm_prediction.png)

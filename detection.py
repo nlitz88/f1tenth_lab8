@@ -2,6 +2,7 @@
 inference on our F1Tenth Car Detection (Object Detection) model.
 """
 
+from copy import deepcopy
 from pathlib import Path
 import time
 from typing import Tuple
@@ -50,21 +51,23 @@ def allocate_buffers(engine):
             device_output = cuda.mem_alloc(host_output.nbytes)
     return host_input, device_input, host_output, device_output
 
-def DisplayLabel(img, bboxs):
+def DisplayLabel(image, bboxs):
     # image = np.transpose(image.copy(), (1, 2, 0))
     # fig, ax = plt.subplots(1, figsize=(6, 8))
-    image = cv.cvtColor(img.copy(), cv.COLOR_BGR2RGB)
+    # image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     fig, ax = plt.subplots(1)
     edgecolor = [1, 0, 0]
     if len(bboxs) == 1:
         bbox = bboxs[0]
         ax.add_patch(patches.Rectangle((bbox[0] - bbox[2]/2, bbox[1] - bbox[3]/2), bbox[2], bbox[3], linewidth=1, edgecolor=edgecolor, facecolor='none'))
+        print(f"One bounding box found at {bbox}")
     elif len(bboxs) > 1:
         for bbox in bboxs:
             ax.add_patch(patches.Rectangle((bbox[0] - bbox[2]/2, bbox[1] - bbox[3]/2), bbox[2], bbox[3], linewidth=1, edgecolor=edgecolor, facecolor='none'))
+    # print(f"Bounding boxes predicted: {bboxs}")
     ax.imshow(image)
-    # plt.show()
     plt.savefig("detection_output.png")
+    plt.show()
 
 # convert from [c_x, c_y, w, h] to [x_l, y_l, x_r, y_r]
 def bbox_convert(c_x, c_y, w, h):
@@ -135,7 +138,7 @@ def main():
 
     # 1. PREPROCESSING
     trt_model_path = Path(r"./f1yolo_fp32.trt")
-    test_image_path = Path(r"./resource/test_car_x60cm.png")
+    test_image_path = Path(r"./resource/hall_car.jpg")
     # Expected output shape.
     # For our model, we only have a single detection head, and it has dimensions
     # b, 5, 6, 10. In this case, (1,5,6,10)
@@ -151,6 +154,12 @@ def main():
     raw_image_shape = test_image.size
     test_image = test_image.resize(resize_shape_wh, resample=Image.Resampling.BICUBIC)
     test_image = np.array(test_image, dtype=np.float32, order="C")
+    # Normalize the test image.
+    test_image = test_image / 255.0
+
+    # Image should be in H,W,C
+    numpy_image = deepcopy(test_image)
+    # cv.imwrite("temp_img.png", numpy_image)
 
     # Reshape the np array that used to be a PIL image into "CHW" (PyTorch shape
     # convention).
@@ -241,7 +250,8 @@ def main():
     [c_x, c_y, w, h] = bbox_convert_r(bbox[0], bbox[1], bbox[2], bbox[3])
     bboxs_2 = np.array([[c_x, c_y, w, h]])
     # DisplayLabel(np.transpose(test_image[0], (1, 2, 0)), bboxs_2)
-    DisplayLabel(img=test_image, bboxs=bboxs_2)
+    DisplayLabel(image=numpy_image, bboxs=bboxs_2)
+    print(f"Confidence: {result_prob[vote_rank[0]]*100:.2f}%")
 
 
 if __name__ == "__main__":
